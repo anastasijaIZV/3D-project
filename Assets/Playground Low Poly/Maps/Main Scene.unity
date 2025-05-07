@@ -1872,7 +1872,7 @@ GameObject:
   - component: {fileID: 186284747}
   - component: {fileID: 186284746}
   m_Layer: 0
-  m_Name: Capsule
+  m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14526,6 +14526,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 1762081041}
+  head: {fileID: 186284745}
+  rb: {fileID: 0}
   walkSpeed: 5
   runSpeed: 12
   jumpPower: 4
@@ -14535,6 +14537,22 @@ MonoBehaviour:
   defaultHeight: 2
   crouchHeight: 1
   crouchSpeed: 3
+  slideSpeed: 9
+  speedIncreaseMultiplier: 0
+  slopeIncreaseMultiplier: 0
+  impactThreshold: 0
+  itemPickupDistance: 5
+  baseCameraFov: 60
+  baseCameraHeight: 0.85
+  walkBobbingRate: 0.75
+  runBobbingRate: 1
+  maxWalkBobbingOffset: 0.2
+  maxRunBobbingOffset: 0.3
+  cameraShakeThreshold: 10
+  cameraShakeRate: 0.015
+  maxVerticalFallShakeAngle: 40
+  maxHorizontalFallShakeAngle: 40
+  maxSlopeAngle: 0
 --- !u!143 &1182409633
 CharacterController:
   m_ObjectHideFlags: 0
@@ -21186,8 +21204,9 @@ GameObject:
   - component: {fileID: 1762081039}
   - component: {fileID: 1762081041}
   - component: {fileID: 1762081040}
+  - component: {fileID: 1762081042}
   m_Layer: 0
-  m_Name: Player Camera
+  m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -21259,6 +21278,24 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!143 &1762081042
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1762081038}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1764493886
 PrefabInstance:
   m_ObjectHideFlags: 0
