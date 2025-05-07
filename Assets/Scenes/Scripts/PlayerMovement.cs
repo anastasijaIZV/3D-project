@@ -5,6 +5,9 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Movement")]
+    public Transform orientation;
+    public Rigidbody rb;
     public Camera playerCamera;
     public Transform head;
     public Rigidbody rb;
@@ -41,6 +44,14 @@ public class PlayerMovement : MonoBehaviour
     public float maxHorizontalFallShakeAngle = 40f;
 
     
+
+    [Header("Climbing")]
+    public float climbSpeed;
+    public float maxClimbTime;
+    private float climbTimer;
+    private bool climbing;
+    public LayerMask whatIsWall;
+
 
     private Vector3 moveDirection = Vector3.zero;
     private float rotationX = 0;
@@ -135,6 +146,8 @@ public class PlayerMovement : MonoBehaviour
                 characterController.height = crouchHeight;
 
         }
+
+
 
         characterController.Move(moveDirection * Time.deltaTime);
 
