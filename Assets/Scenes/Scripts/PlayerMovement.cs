@@ -1,23 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Movement")]
-    public Transform orientation;
-    public Rigidbody rb;
     public Camera playerCamera;
     public Transform head;
 
-     [Header("Movement")]
+    [Header("Movement")]
     public float walkSpeed = 6f;
     public float runSpeed = 12f;
     public float jumpPower = 7f;
     public float gravity = 10f;
     public float lookSpeed = 2f;
-    public float lookXLimit = 45f;
+    public float lookXLimit = 90f;
     public float defaultHeight = 2f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 3f;
@@ -25,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
     public float speedIncreaseMultiplier;
     public float slopeIncreaseMultiplier;
     public float impactThreshold;
-    public float itemPickupDistance;
+    public float itemPickupDistance = 5f
     private float startYScale;
 
 [Header("Camera Effects")]
@@ -69,104 +64,54 @@ public class PlayerMovement : MonoBehaviour
     public float exitWallTime;
     private float exitWallTimer;
 
+    private CharacterController characterController;
     private Vector3 moveDirection = Vector3.zero;
     private float rotationX = 0;
-    private CharacterController characterController;
-
-    private LayerMask whatIsGround;
-    bool grounded;
-    public float maxSlopeAngle;
-    public RaycastHit slopeHit;
-    private bool exitingSlope;
-    private bool sliding;
-
     private bool canMove = true;
-    Transform attachedObject = null;
-    float attachedDistance = 0f;
+    private bool isCrouching = false;
+
+    private Transform attachedObject = null;
+    private float attachedDistance = 0f;
 
     void Start()
     {
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        startYScale = transform.localScale.y;
     }
 
     void Update()
     {
-        grounded = Physics.Raycast(transform.position, Vector3.down, defaultHeight * 0.5f + 0.2f, whatIsGround);
+        HandleMovement();
+        HandleMouseLook();
+        HandleJump();
+        HandleCrouch();
+        HandlePickup();
+    }
 
+    void HandleMovement()
+    {
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
 
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
         float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Vertical") : 0;
         float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Horizontal") : 0;
+
         float movementDirectionY = moveDirection.y;
         moveDirection = (forward * curSpeedX) + (right * curSpeedY);
-
-        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
-        {
-            moveDirection.y = jumpPower;
-        }
-        else
-        {
-            moveDirection.y = movementDirectionY;
-        }
+        moveDirection.y = movementDirectionY;
 
         if (!characterController.isGrounded)
         {
             moveDirection.y -= gravity * Time.deltaTime;
         }
 
-        if (Input.GetKey(KeyCode.R) && canMove)
-        {
-            characterController.height = crouchHeight;
-            walkSpeed = crouchSpeed;
-            runSpeed = crouchSpeed;
-
-        }
-        else
-        {
-            characterController.height = defaultHeight;
-            walkSpeed = 6f;
-            runSpeed = 12f;
-        }
-        float time = 0;
-        if (OnSlope() && !exitingSlope)
-        {
-            rb.AddForce(GetSlopeMoveDirection() * walkSpeed * 20f, ForceMode.Force);
-
-            if (rb.velocity.y > 0)
-                rb.AddForce(Vector3.down * 80f, ForceMode.Force);
-            if (rb.velocity.magnitude > walkSpeed)
-                rb.velocity = rb.velocity.normalized * walkSpeed;
-
-            float slopeAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
-            float slopeAngleIncrease = 1 + (slopeAngle / 90f);
-
-            time += Time.deltaTime * speedIncreaseMultiplier * slopeIncreaseMultiplier * slopeAngleIncrease;
-        }
-    
-
-        if (Input.GetKey(KeyCode.L) && canMove)
-        {
-
-            if (OnSlope() && rb.velocity.y < 0.1f)
-                walkSpeed = slideSpeed;
-
-            else
-                walkSpeed = slideSpeed;
-                runSpeed = slideSpeed;
-                characterController.height = crouchHeight;
-
-        }
-
-
-
         characterController.Move(moveDirection * Time.deltaTime);
+    }
 
+    void HandleMouseLook()
+    {
         if (canMove)
         {
             rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
@@ -174,52 +119,43 @@ public class PlayerMovement : MonoBehaviour
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
             transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
         }
+    }
 
-//  If controls are pressed and is touching the ground
-        Vector3 newVelocity;
-        bool isGrounded = false;
-        bool isJumping = false;
-    transform.Rotate(Vector3.up * Input.GetAxis("Mouse X") * 2f);   // Adjust the multiplier for different rotation speed
-
-        newVelocity = Vector3.up * rb.velocity.y;
-        float speed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
-        newVelocity.x = Input.GetAxis("Horizontal") * speed;
-        newVelocity.z = Input.GetAxis("Vertical") * speed;
-
-    if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 1f)) {
-            isGrounded = true;
-
-            //  Check the ground tag for different walking sounds
-            //  Edit this part to check for the other tags of yours!
-           
+    void HandleJump()
+    {
+        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
+        {
+            moveDirection.y = jumpPower;
         }
-        else isGrounded = false;
+    }
 
-        if (isGrounded) {
-            if (Input.GetKeyDown(KeyCode.Space) && !isJumping) {
-                newVelocity.y = runSpeed;
-                isJumping = true;
-            }
+    void HandleCrouch()
+    {
+        if (Input.GetKey(KeyCode.C) && canMove)
+        {
+            characterController.height = crouchHeight;
+            walkSpeed = crouchSpeed;
+            runSpeed = crouchSpeed;
+            isCrouching = true;
         }
-        rb.velocity = transform.TransformDirection(newVelocity);
-
-        bool isMovingOnGround = (Input.GetAxis("Vertical") != 0f || Input.GetAxis("Horizontal") != 0f) && isGrounded;
-        
-
-
-        //  Head bob
-        if (isMovingOnGround) {
-            float bobbingRate = Input.GetKey(KeyCode.LeftShift) ? runBobbingRate : walkBobbingRate;
-            float bobbingOffset = Input.GetKey(KeyCode.LeftShift) ? maxRunBobbingOffset : maxWalkBobbingOffset;
-            Vector3 targetHeadPosition = Vector3.up * baseCameraHeight + Vector3.up * (Mathf.PingPong(Time.time * bobbingRate, bobbingOffset) - bobbingOffset*.5f);
-            head.localPosition = Vector3.Lerp(head.localPosition, targetHeadPosition, .1f);
+        else if (isCrouching)
+        {
+            characterController.height = defaultHeight;
+            walkSpeed = 6f;
+            runSpeed = 12f;
+            isCrouching = false;
         }
-        
-Vector3 e = head.eulerAngles;
-        e.x -= Input.GetAxis("Mouse Y") * 2f;   //  Edit the multiplier to adjust the rotate speed
-        e.x = RestrictAngle(e.x, -85f, 85f);    //  This is clamped to 85 degrees. You may edit this.
-        head.eulerAngles = e;
+    }
 
+    void HandlePickup()
+    {
+        RaycastHit hit;
+        bool cast = Physics.Raycast(head.position, head.forward, out hit, itemPickupDistance);
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (attachedObject != null)
+            {
         // FOV
         float fovOffset = (rb.velocity.y < 0f) ? Mathf.Sqrt(Mathf.Abs(rb.velocity.y)) : 0f;
         //GetComponent<Camera>().fieldOfView = Mathf.Lerp(GetComponent<Camera>().fieldOfView, baseCameraFov + fovOffset, .25f);
@@ -258,34 +194,27 @@ Vector3 e = head.eulerAngles;
             if (attachedObject != null) {
                 attachedObject.SetParent(null);
 
-                //  Disable is kinematic for the rigidbody, if any
                 if (attachedObject.GetComponent<Rigidbody>() != null)
                     attachedObject.GetComponent<Rigidbody>().isKinematic = false;
 
-                //  Enable the collider, if any
                 if (attachedObject.GetComponent<Collider>() != null)
                     attachedObject.GetComponent<Collider>().enabled = true;
 
                 attachedObject = null;
             }
-            //  Pick up an object
-            else {
-                if (cast) {
-                    if (hit2.transform.CompareTag("pickable")) {
-                        attachedObject = hit2.transform;
-                        attachedObject.SetParent(transform);
+            else
+            {
+                if (cast && hit.transform.CompareTag("pickable"))
+                {
+                    attachedObject = hit.transform;
+                    attachedObject.SetParent(transform);
+                    attachedDistance = Vector3.Distance(attachedObject.position, head.position);
 
-                        attachedDistance = Vector3.Distance(attachedObject.position, head.position);
+                    if (attachedObject.GetComponent<Rigidbody>() != null)
+                        attachedObject.GetComponent<Rigidbody>().isKinematic = true;
 
-                        //  Enable is kinematic for the rigidbody, if any
-                        if (attachedObject.GetComponent<Rigidbody>() != null)
-                            attachedObject.GetComponent<Rigidbody>().isKinematic = true;
-
-                        //  Disable the collider, if any
-                        //  This is necessary
-                        if (attachedObject.GetComponent<Collider>() != null)
-                            attachedObject.GetComponent<Collider>().enabled = false;
-                    }
+                    if (attachedObject.GetComponent<Collider>() != null)
+                        attachedObject.GetComponent<Collider>().enabled = false;
                 }
             }
         }
