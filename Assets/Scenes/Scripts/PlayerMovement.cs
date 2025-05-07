@@ -52,7 +52,7 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask whatIsWall;
 
     [Header("Detection")]
-    public float detectionLength = 0.5f;
+    public float detectionLength = .5f;
     public float sphereCastRadius = 1f;
     public float maxWallLookAngle = 20f;
     private float wallLookAngle;
