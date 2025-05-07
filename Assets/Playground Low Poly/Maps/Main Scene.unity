@@ -9368,7 +9368,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1ed85c118230d841a2c48471ccbcc7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  menuPanel: {fileID: 0}
+  menuPanel: {fileID: 1997429014}
 --- !u!4 &708674041
 Transform:
   m_ObjectHideFlags: 0
@@ -15561,31 +15561,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 1762081041}
-  walkSpeed: 3
+  head: {fileID: 186284745}
+  walkSpeed: 4
   runSpeed: 6
-  jumpPower: 4
+  jumpPower: 3
   gravity: 10
   lookSpeed: 2
   lookXLimit: 90
   defaultHeight: 2
   crouchHeight: 1
-  crouchSpeed: 3
+  crouchSpeed: 1
   slideSpeed: 9
-  speedIncreaseMultiplier: 0
-  slopeIncreaseMultiplier: 0
-  impactThreshold: 0
   itemPickupDistance: 5
-  baseCameraFov: 60
-  baseCameraHeight: 0.85
-  walkBobbingRate: 0.75
-  runBobbingRate: 1
-  maxWalkBobbingOffset: 0.2
-  maxRunBobbingOffset: 0.3
-  cameraShakeThreshold: 10
-  cameraShakeRate: 0.015
-  maxVerticalFallShakeAngle: 40
-  maxHorizontalFallShakeAngle: 40
-  maxSlopeAngle: 0
 --- !u!143 &1182409633
 CharacterController:
   m_ObjectHideFlags: 0
@@ -15611,7 +15598,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1182409631}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 1.06, y: 1.2, z: 11.91}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -15619,7 +15606,7 @@ Transform:
   - {fileID: 186284745}
   m_Father: {fileID: 0}
   m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1001 &1182629375
 PrefabInstance:
   m_ObjectHideFlags: 0
