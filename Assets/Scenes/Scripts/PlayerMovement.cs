@@ -45,16 +45,16 @@ public class PlayerMovement : MonoBehaviour
     
 
     [Header("Climbing")]
-    public float climbSpeed;
-    public float maxClimbTime;
+    public float climbSpeed = 5f;
+    public float maxClimbTime = 3f;
     private float climbTimer;
     private bool climbing;
     public LayerMask whatIsWall;
 
     [Header("Detection")]
-    public float detectionLength;
-    public float sphereCastRadius;
-    public float maxWallLookAngle;
+    public float detectionLength = 0.5f;
+    public float sphereCastRadius = 1f;
+    public float maxWallLookAngle = 20f;
     private float wallLookAngle;
 
     private RaycastHit frontWallHit;
@@ -62,7 +62,7 @@ public class PlayerMovement : MonoBehaviour
 
     private Transform lastWall;
     private Vector3 lastWallNormal;
-    public float minWallNormalAngleChange;
+    public float minWallNormalAngleChange = 45f;
 
     [Header("Exiting")]
     public bool exitingWall;
