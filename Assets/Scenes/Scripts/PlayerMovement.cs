@@ -10,7 +10,6 @@ public class PlayerMovement : MonoBehaviour
     public Rigidbody rb;
     public Camera playerCamera;
     public Transform head;
-    public Rigidbody rb;
 
      [Header("Movement")]
     public float walkSpeed = 6f;
@@ -52,6 +51,23 @@ public class PlayerMovement : MonoBehaviour
     private bool climbing;
     public LayerMask whatIsWall;
 
+    [Header("Detection")]
+    public float detectionLength;
+    public float sphereCastRadius;
+    public float maxWallLookAngle;
+    private float wallLookAngle;
+
+    private RaycastHit frontWallHit;
+    private bool wallFront;
+
+    private Transform lastWall;
+    private Vector3 lastWallNormal;
+    public float minWallNormalAngleChange;
+
+    [Header("Exiting")]
+    public bool exitingWall;
+    public float exitWallTime;
+    private float exitWallTimer;
 
     private Vector3 moveDirection = Vector3.zero;
     private float rotationX = 0;
@@ -206,7 +222,7 @@ Vector3 e = head.eulerAngles;
 
         // FOV
         float fovOffset = (rb.velocity.y < 0f) ? Mathf.Sqrt(Mathf.Abs(rb.velocity.y)) : 0f;
-        GetComponent<Camera>().fieldOfView = Mathf.Lerp(GetComponent<Camera>().fieldOfView, baseCameraFov + fovOffset, .25f);
+        //GetComponent<Camera>().fieldOfView = Mathf.Lerp(GetComponent<Camera>().fieldOfView, baseCameraFov + fovOffset, .25f);
 
          if (!isGrounded && Mathf.Abs(rb.velocity.y) >= cameraShakeThreshold) {
             Vector3 newAngle = head.localEulerAngles;
@@ -222,7 +238,13 @@ Vector3 e = head.eulerAngles;
             head.localEulerAngles = e;
         }
 
-
+        if (Input.GetKey(KeyCode.C))
+        {
+            walkSpeed = climbSpeed;
+            WallCheck();
+            StateMachine();
+            if (climbing && !exitingWall) ClimbingMovement();
+        }
 
         // Picking objects
         RaycastHit hit2; 
@@ -304,90 +326,70 @@ Vector3 e = head.eulerAngles;
         return Vector3.ProjectOnPlane(moveDirection, slopeHit.normal).normalized;
     }
 
-
-}
-
-public class sliding : MonoBehaviour
-{
-
-    [Header("References")]
-    public Transform orientation;
-    public Transform playerObj;
-    public Rigidbody rb;
-    private PlayerMovement pm;
-
-    [Header("Sliding")]
-    public float maxSlideTime;
-    public float slideForce;
-    private float slideTimer;
-
-    public float slideYScale;
-    private float startYScale;
-
-    [Header("Input")]
-    private float horizontalInput;
-    private float verticalInput;
-
-
-    private void Start()
+    public void StateMachine()
     {
-        rb = GetComponent<Rigidbody>();
-        pm = GetComponent<PlayerMovement>();
-
-        startYScale = playerObj.localScale.y;
-    }
-
-    private void Update()
-    {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-
-        if (Input.GetKeyDown(KeyCode.L) && (horizontalInput != 0 || verticalInput != 0))
-            StartSlide();
-
-        if (Input.GetKeyUp(KeyCode.L))
-            StopSlide();
-    }
-
-    private void FixedUpdate()
-    {
-        if (Input.GetKeyDown(KeyCode.L))
-            SlidingMovement();
-    }
-
-    private void StartSlide()
-    {
-
-        playerObj.localScale = new Vector3(playerObj.localScale.x, slideYScale, playerObj.localScale.z);
-        rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-
-        slideTimer = maxSlideTime;
-    }
-
-    private void SlidingMovement()
-    {
-        Vector3 inputDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
-
-        // sliding normal
-        if (!pm.OnSlope() || rb.velocity.y > -0.1f)
+        // State 1 - Climbing
+        if (wallFront && Input.GetKey(KeyCode.C) && wallLookAngle < maxWallLookAngle && !exitingWall )
         {
-            rb.AddForce(inputDirection.normalized * slideForce, ForceMode.Force);
+            if (!climbing && climbTimer > 0)
+            {
+                StartClimbing();
+            }
 
-            slideTimer -= Time.deltaTime;
+            // timer
+            if (climbTimer > 0) climbTimer -= Time.deltaTime;
+            if (climbTimer < 0)
+            {
+                StopClimbing();
+            }
         }
 
-        // sliding down a slope
+        // State 2 - Exiting
+        else if (exitingWall)
+        {
+            if (Input.GetKey(KeyCode.C)) StopClimbing();
+
+            if (exitWallTimer > 0) exitWallTimer -= Time.deltaTime;
+            if (exitWallTimer < 0) exitingWall = false;
+        }
+
+        // State 3 - None
         else
         {
-            rb.AddForce(pm.GetSlopeMoveDirection() * slideForce, ForceMode.Force);
+            if (climbing) StopClimbing();
         }
+    }
+    public void WallCheck()
+    {
+        wallFront = Physics.SphereCast(transform.position, sphereCastRadius, orientation.forward, out frontWallHit, detectionLength, whatIsWall);
+        wallLookAngle = Vector3.Angle(orientation.forward, -frontWallHit.normal);
 
-        if (slideTimer <= 0)
-            StopSlide();
+        bool newWall = frontWallHit.transform != lastWall || Mathf.Abs(Vector3.Angle(lastWallNormal, frontWallHit.normal)) > minWallNormalAngleChange;
+
+        if ((wallFront && newWall) || grounded)
+        {
+            climbTimer = maxClimbTime;
+        }
     }
 
-    private void StopSlide()
-    { 
-        playerObj.localScale = new Vector3(playerObj.localScale.x, startYScale, playerObj.localScale.z);
+    public void StartClimbing()
+    {
+        climbing = true;
+
+        lastWall = frontWallHit.transform;
+        lastWallNormal = frontWallHit.normal;
+
+    }
+
+    public void ClimbingMovement()
+    {
+        rb.velocity = new Vector3(rb.velocity.x, climbSpeed, rb.velocity.z);
+        moveDirection.y = climbSpeed;
+    }
+
+    public void StopClimbing()
+    {
+        climbing = false;
+
     }
 }
